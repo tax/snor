@@ -70,7 +70,7 @@ class TestClients(unittest.TestCase):
 
     def test_get_clients(self):
         cs = clients.get_torrent_clients()
-        self.assertEqual(cs, ['transmission','utorrent'])
+        self.assertItemsEqual(cs, ['transmission','utorrent'])
 
     def test_client_notexsit(self):
         self.assertRaises(
