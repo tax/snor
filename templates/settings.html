@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block container %}
+<div class="row">
+    <div class="span11 left">
+      <div class="white-panel">
+
+        <div class="page-header">
+            <h2>Settings</h2>
+        </div>
+
+        
+        
+        <div class="alert{% if not msg %} hide{% endif %}">
+            <strong>{{msg}}</strong>
+        </div>
+
+        <form id="id_form_settings" name="form_settings" class="form-horizontal" method="POST" action=".">
+
+            <input type="hidden" name="filters" value="">
+
+            <div class="control-group">
+                <label class="control-label" for="login">Login:</label>
+                <div class="controls">
+                <label class="radio">
+                    <input type="radio" name="login_required" value="nologin" {% if not settings.login_required %}checked{% endif %}>
+                    No login required
+                </label>
+                <label class="radio">
+                    <input type="radio" name="login_required" value="login" {% if settings.login_required %}checked{% endif %}>
+                    Require username and password
+                </label>
+
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="username">Username:</label>
+                <div class="controls">
+                    <input class="span3 login" type="text" name="username" placeholder="username" value="{{settings.username}}" {% if not settings.login_required %}readonly="true"{% endif %}/>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="password">Password:</label>
+                <div class="controls">
+                    <input class="span3 login" type="password" name="password" value="{{settings.password}}" {% if not settings.login_required %}readonly="true"{% endif %}/>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="controls">
+                    <input class="span3 login" type="password" name="passwordconfirm" value="{{settings.password}}" {% if not settings.login_required %}readonly="true"{% endif %}/>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="client">Torrent client:</label>
+                <div class="controls">
+                    <select id="id_client" name="client">
+                        {% for c in clients %}<option {% if settings.client == c%}selected{% endif %}>{{c}}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+
+
+            <div class="control-group">
+                <label class="control-label" for="search_client">Search client:</label>
+                <div class="controls">                    
+                    <select id="id_search_client" name="search_client" {% if search_clients|length == 1 %}readonly="true"{% endif %}>
+                        {% for c in search_clients %}<option {% if settings.search_client == c%}selected{% endif %}>{{c}}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+
+
+            <div class="control-group">
+                <label class="control-label" for="folder">Starting folder:</label>
+                <div class="controls">
+                    <input class="span3" type="text" name="folder" placeholder="Select folder" value="{{settings.folder}}" readonly="true"/>
+                    <button type="button" id="id_browse" class="btn"><i class="icon-search"></i> Browse</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="log">Logfile:</label>
+                <div class="controls">
+                    <input class="span3" type="text" name="folder" value="/log/debug.log" disabled="true" />
+                    <a href="/log/" target="_blank" class="btn"><i class="icon-search"></i>View log </a>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="control-label">Filters:</label>
+                <div class="controls">
+                <table id="id_table_filters" class="table table-bordered" style="width:500px;">    
+                  <tbody>
+                    <tr data-filter='{"key":"name","operator":"in","value":"{{request.args.name}}"}'>                
+                      <td><em>Name</em></td>
+                      <td><em>Contains</em></td>
+                      <td><em>{{request.args.name}}</em></td>
+                      <td>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-mini"><i class="icon-minus"></i></button>
+                            <button class="btn btn-mini disabled" disabled="disabled"><i class="icon-plus"></i></button>
+                        </div>
+                      </td>
+                    </tr>           
+
+                    <tr class="filter-form">                
+                      <td>
+                        <select id="id_key" name="key" class="input-medium">
+                            <option value="size">Size in MB</option>
+                            <option value="name">Name</option>
+                            <option value="peers">Number of peers</option>
+                            <option value="seeds">Number of seeders</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select id="id_operator" name="operator" class="input-medium">
+                            <option value="gt">Greater then</option>
+                            <option value="st">Smaller then</option>
+                        </select>
+                      </td>
+                      <td>
+                        <div class="control-group" style="margin-bottom:0px;">
+                            <input type="text" id="id_filter_value" class="input-medium" name="value" placeholder="Value..." />
+                        </div>
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                            <button class="btn disabled btn-mini" disabled="disabled"><i class="icon-minus"></i></button>
+                            <button id="id_add_filter" type="button" class="btn btn-mini"><i class="icon-plus"></i></button>
+                        </div>
+                      </td>
+                    </tr>           
+                  </tbody>
+                </table>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Other options:</label>
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox" name="use_season_folders" {% if settings.use_season_folders %}checked{% endif %}> Use season folders
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" name="download_new_only" {% if settings.download_new_only %}checked{% endif %}/> 
+                        Only download new episodes <em>(Skip aired episodes)</em>
+                    </label>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <button type="submit" class="btn btn-success"><i class="icon-ok icon-white"></i> Save settings</button>
+                </div>
+            </div>
+
+        </form>
+        </div>
+    </div>
+</div>
+        
+{% include "modal_browse.html" %}
+
+{% endblock %}
+
+{% block script %}
+<script>
+$("#id_form_settings").on('submit', function () {
+    var p = $('input[name=password]').val();
+    var pc = $('input[name=passwordconfirm]').val();
+    if(p != pc){
+        $(".alert").removeClass('hide').addClass('alert-error');;
+        $(".alert strong").html('Passwords dont match');
+        $('input[name=password],input[name=passwordconfirm]').parents('.control-group').addClass('error');
+        return false;
+    }
+    else{
+        $(".alert").addClass('hide');
+        $('input[name=password],input[name=passwordconfirm]').parents('.control-group').removeClass('error');
+        return true;
+    }
+});
+
+$("input[name=login_required]").change(function () {
+    var v = $('input[name=login_required]:radio:checked').val();
+    if(v == "nologin"){
+        $('.login').attr('readonly','true')
+    }
+    else{
+        $('.login').removeAttr('readonly');
+    }
+});
+
+$('#id_browse').on('click',function(e){
+    e.preventDefault();
+    filePicker({ 
+            startPath : '', 
+            show : true
+        }, 
+        function(folder){ 
+            $('input[name=folder]').val(folder);
+        }
+    );  
+});
+
+
+</script>
+{% endblock %}

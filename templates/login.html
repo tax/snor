@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Signin{% endblock %}
+{% block navbar %}{% endblock %}
+
+{% block container %}
+
+
+    
+      <form class="form-signin" method="POST" action=".">
+        <div class="white-panel">
+          <h2>Please sign in</h2>
+          {% if msg %}
+          <div class="alert alert-error">
+              <strong>{{msg}}</strong>
+          </div>
+          {% endif %}
+          <input name="username" type="text" class="input-xlarge" placeholder="Username">
+          <input name="password" type="password" class="input-xlarge" placeholder="Password">
+          <br/>
+          <button class="btn btn-large btn-success" type="submit">Sign in</button>
+          </div>
+      </form>
+    
+
+{% endblock %}
+
+{% block script %}
+<script>
+$("input[name='username']").focus();
+</script>
+{% endblock %}

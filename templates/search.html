@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Search{% endblock %}
+
+{% block container %}
+<div class="row">
+    <div class="span10 left">
+      <div class="white-panel">
+        <h3>Search for show</h3>
+        <div class="input-append">
+            <form id="id_frm_search" name="frm_search" method="POST" action=".">
+            <input class="span3" type="text" name="q" placeholder="Search...">
+            <button class="btn" type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+$("input[name='q']").focus();
+</script>
+{% endblock %}

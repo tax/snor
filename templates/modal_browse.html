@@ -1,0 +1,112 @@
+    <div id="modalbrowse" class="modal hide fade">
+      <div class="modal-header">
+        <button type="button" class="close cancel_modal" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>Select directory</h3>
+      </div>
+      <div class="modal-body">
+        <h4 id="id_current_directory"></h4>
+        <div id="id_modalbrowse_error" class="alert alert-error hide"></div>        
+        <ul id="id_directories" class="nav nav-tabs nav-stacked">
+              
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn cancel_modal" data-dismiss="modal">Cancel</button>
+        <button id="id_select" class="btn btn-primary">Select</button>
+      </div>
+    </div>
+    
+<script>
+function filePicker(options, cb){
+    var self = this;
+    var defaults = {
+        show : false,
+        startPath : '',
+        showFiles : false,
+    };
+    self.settings = $.extend(defaults, options);
+
+    //selector, startPath, showFiles, on select on show
+
+    self.show = function(){
+        $('#modalbrowse').modal('show');
+        this.listDirs(this.settings.startPath);    
+    };
+
+    self.listDirs = function(path){
+        var self = this;
+        var url = path.length > 0 ? '/list/dir/?folder=' + path : '/list/dir/';
+        $('#id_directories').find('li').remove();
+        
+        $.getJSON(url, function(data) {
+            
+            $('#id_current_directory').text(data.current);
+            $('#id_select').prop('disabled', !data.selectable);
+            
+            if(data.stat == 'fail'){
+                $('#id_modalbrowse_error').removeClass("hide");
+                $('#id_modalbrowse_error').html('<strong>Error!</strong> ' + data.msg);
+            }
+            else{
+                $('#id_modalbrowse_error').addClass("hide")
+            }
+            
+            $.each(data.result, function(index, value) {
+                if(value.is_dir){
+                    var html = '<li><a href="#" data-path="' + value.path + '" class="directory"><i class="icon-folder-close"></i> ' + value.name + '</a></li>';
+                    if(value.name == ".."){
+                        html = '<li><a href="#" data-path="' + value.path + '" class="directory"><i class="icon-folder-open"></i> ' + value.name + '</a></li>';
+                    }
+                    $('#id_directories').append(html);
+                }
+                else{
+                    if(self.settings.showFiles){
+                        var html = '<li><a href="#" data-path="' + value.path + '" class="file"><i class="icon-file"></i> ' + value.name + '</a></li>';
+                        $('#id_directories').append(html);
+                    }
+                }
+            });
+        });
+    };
+
+    function removeEvents(){
+        $('#id_select').off('click');
+        $('.cancel_modal').off('click');
+        $("#id_directories").off("click", "a.file");
+        $("#id_directories").off("click", "a.directory");
+    }
+
+    $('#id_select').on('click',function(e){
+        e.preventDefault();
+        var val = $('#id_current_directory').text();
+        $('#modalbrowse').modal('hide');
+        removeEvents();
+
+        if ($.isFunction(cb)){
+            return cb(val);
+        }
+    });
+
+    $('.cancel_modal').on('click',removeEvents);
+
+    $("#id_directories").on("click", "a.directory", function(e) {
+        self.listDirs($(this).attr('data-path'));
+    });
+
+    $("#id_directories").on("click", "a.file", function(e) {
+        e.preventDefault();
+        var val = $(this).attr('data-path');
+        $('#modalbrowse').modal('hide');
+        if ($.isFunction(cb)){
+            return cb(val);
+        }
+    });
+
+    if(self.settings.show){
+        self.show();
+    }
+};
+
+
+
+</script>

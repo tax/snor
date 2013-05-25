@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}{{show.seriesname}}{% endblock %}
+
+{% block container %}
+<div class="row">
+
+    <div class="span9 left">
+      <div class="white-panel">
+
+        <h3>{{show.seriesname}}</h3>
+        <p class="details"> 
+        Status: <span class="{% if show.status == "Ended"%}text-warning{% else%}text-success{% endif %}">{{show.status}}</span>
+        - Airs: {{show.airs_dayofweek}} {{show.airs_time}}
+        </p>
+      
+        {% if request.args.msg %}
+          <div class="alert">
+              <strong>{{request.args.msg}}</strong>
+          </div>
+        {% endif %}
+
+    {% for season in episodes|groupby('seasonnumber') | reverse %}
+        <a name="season{{season.grouper}}"></a>
+        <h4>{% if season.grouper != 0 %}Season {{season.grouper}}{% else %}Specials{% endif %}</h4>
+        <table class="table table-bordered">    
+          <thead>
+            <tr>
+              <th width="50%">Name</th>
+              <th width="5%"></th>
+              <th width="15%">Airdate</th>
+              <th width="15%">Status</th>
+              <th width="15%"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for episode in season.list | reverse %}
+            <tr id="id_episode_{{episode.id}}" class="status_{{episode.get_status()|replace(" ","")}}">
+              <td>
+                <strong>{{episode.episodenumber}}.</strong> {{episode.episodename|default("TBA", True)}}
+                {% if episode.imdb_id %}<a href="http://www.imdb.com/title/{{episode.imdb_id}}/" target="_blank"><img src="/static/img/imdb-icon24.png"/ class="imdb-icon"></a>{% endif %}
+              </td>
+              <td>
+                {% if episode.overview %}
+                <a href="#" data-toggle="tooltip" data-placement="left" title="{{episode.overview}}"><i class="icon-info-sign"></i></a>
+                {% endif %}
+              </td>
+              <td>
+                {% if episode.firstaired %}
+                {{episode.firstaired.strftime('%Y-%m-%d')}}
+                {% else %}
+                Never
+                {% endif %}
+              </td>
+              <td class="episode_status" {% if episode.get_status() == "downloaded" %}title="{{episode.location}}"{% endif %}>
+                {{episode.get_status()}}
+              </td>
+              <td>
+                <!-- -->
+                <div class="btn-group">
+                  <button class="btn btn-small btn-inverse">Action</button>
+                  <button class="btn btn-small btn-inverse dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a tabindex="-1" href="#" class="action_mark" data-action="skipped" data-episode-id="{{episode.id}}">Mark as skipped</a></li>
+                    <li><a tabindex="-1" href="#" class="action_mark" data-action="wanted" data-episode-id="{{episode.id}}">Mark as wanted</a></li>
+                    <li><a tabindex="-1" href="#"class="action_mark" data-action="downloaded" data-episode-id="{{episode.id}}">Mark as downloaded</a></li>
+                  </ul>
+                </div>
+
+              </td>
+            </tr>
+           {% endfor %}
+        </table>
+    {% endfor %}
+      </div>
+    </div>
+
+    <div class="span3 right">
+    <ul class="nav nav-list action-menu">
+      <li class="nav-header">Actions</li>
+      <li><a href="#" id="id_action_remove" data-toggle="tooltip" data-placement="left" title="Remove show from download list">
+        <i class="icon-remove"></i> Delete</a>
+      </li>
+      <li><a href="#" id="id_action_scan" data-toggle="tooltip" data-placement="left" title="Scan hardisk for downloaded files">
+        <i class="icon-repeat"></i> Scan</a>
+      </li>
+      <li><a href="#" id="id_action_update" data-toggle="tooltip" data-placement="left" title="Get new episodes from TVDB">
+        <i class="icon-info-sign"></i> Update</a>
+      </li>
+      <li><a href="/show/{{show.id}}/settings/" id="id_action_settings" data-toggle="tooltip" data-placement="left" title="Show settings">
+        <i class="icon-wrench"></i> Settings</a>
+      </li>
+      <li><a href="#" id="id_action_info" data-toggle="tooltip" data-placement="left" title="Show info">
+          <i class="icon-info-sign"></i> Info</a>
+      </li>
+      <li class="nav-header">Seasons</li>
+    {% for season in episodes|groupby('seasonnumber') | reverse %}
+      <li><a href="#season{{season.grouper}}"><i class="icon-chevron-left"></i> {% if season.grouper != 0 %}Season {{season.grouper}}{% else %}Specials{% endif %}</a></li>
+    {% endfor %}
+    </ul>
+    </div>
+
+</div>
+
+<div id="modalinfo" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>{{show.seriesname}}</h3>
+  </div>
+  <div class="modal-body">
+    <table class="table table-bordered">    
+      <tbody>
+        <tr>
+          <td colspan="2"><strong>Overview:</strong></td>
+        </tr>
+        <tr>
+          <td colspan="2">{{show.overview}}</td>
+        </tr>
+        <tr>
+          <td><strong>Status:</strong></td>
+          <td>
+            <span class="{% if show.status == "Ended"%}text-warning{% else%}text-success{% endif %}">{{show.status}}</span>
+            <em>({{episodes|groupby('seasonnumber')|length}} season{% if episodes|groupby('seasonnumber')|length > 1 %}s{% endif%} 
+            {{episodes.count()}} episodes)</em>
+          </td>
+        </tr>        
+        <tr>
+          <td><strong>First aired:</strong></td>
+          <td>{{show.firstaired.strftime('%Y-%m-%d')}}</td>
+        </tr>        
+        <tr>
+          <td><strong>Airs:</strong></td>
+          <td>{{show.airs_dayofweek}} {{show.airs_time}}</td>
+        </tr>        
+        <tr>
+          <td><strong>Network:</strong></td>
+          <td>{{show.network}}</td>
+        </tr>
+        <tr>
+          <td><strong>Folder:</strong></td>
+          <td>{{show.folder}}</td>
+        </tr>        
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+
+{% include "modal_browse.html" %}
+
+{% endblock %}
+
+{% block script %}
+<script>
+$("a[data-toggle='tooltip']").tooltip();
+
+$("#id_action_remove").on("click", function(e){
+  if(confirm("Delete {{show.seriesname}} from your download list (no files will be deleted)")){
+    $.ajax({
+      url:"/api/?action=delete&show_id={{show.id}}", type:'POST'
+    })
+    .done(function() { 
+      window.location = '/';
+    })
+    .fail(function() { alert("Error scanning show"); }); 
+  }
+});
+
+$("#id_action_scan").on("click", function(e){
+    $.ajax({
+      url:"/api/?action=scan&show_id={{show.id}}", type:'POST'
+    })
+    .done(function() { 
+      location.reload();
+    })
+    .fail(function() { alert("Error scanning show"); });
+});
+
+$("#id_action_update").on("click", function(e){
+    $.ajax({
+      url:"/api/?action=update&show_id={{show.id}}", type:'POST'
+    })
+    .done(function() { 
+      location.reload();
+    })
+    .fail(function() { alert("Error scanning show"); });
+});
+
+$("#id_action_info").on("click", function(e){
+  $('#modalinfo').modal('show');
+});
+
+
+
+$('#id_select').on('click',function(e){
+    e.preventDefault();
+    $('#modalbrowse').modal('hide');
+    $('input[name=folder]').val($('#id_current_directory').text());
+});
+
+$(".action_mark").on("click", function(e){
+    e.preventDefault();
+    var action = $(this).attr('data-action');
+    var id = $(this).attr('data-episode-id');
+    if(action == 'downloaded'){
+      $('#modalbrowse').modal('show');
+      filePicker({ 
+              startPath : '{{show.folder}}', 
+              showFiles : true,
+              show : true
+          }, 
+          function(file){ 
+            $.ajax({
+              url:"/api/?action=episode_mark_downloaded&episode_id=" + id + '&location=' + file, 
+              type:'POST'
+            })
+            .done(function() { 
+              $('tr#id_episode_' + id).removeClass().addClass('status_' + action);
+              $('tr#id_episode_' + id +' td.episode_status').html(action);
+            })
+            .fail(function() { alert("Something went wrong please try again."); });
+          }
+      );
+    }
+    else{
+      $.ajax({
+        url:"/api/?action=episode_mark_" + action + "&episode_id=" + id, 
+        type:'POST'
+      })
+      .done(function() { 
+        $('tr#id_episode_' + id).removeClass().addClass('status_' + action);
+        $('tr#id_episode_' + id +' td.episode_status').html(action);
+      })
+      .fail(function() { alert("Something went wrong please try again."); });
+    }
+});
+
+
+
+
+</script>
+{% endblock %}

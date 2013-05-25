@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Search results for {{query}}{% endblock %}
+
+{% block container %}
+
+<div class="row">
+    <div class="span10 left">
+      <div class="white-panel">
+        <h3>Search result</h3>
+        <div class="input-append">
+          <form id="id_frm_search" name="frm_search" method="POST" action=".">
+          <input class="span3" type="text" name="q" value="{{query}}" placeholder="Search">
+          <button class="btn" type="submit">Search</button>
+          </form>
+        </div>
+
+        {% if result %}
+        <table class="table table-bordered">    
+          <thead>
+            <tr>
+              <th width="60%">Name</th>
+              <th width="20%">Start date</th>
+              <th width="20%">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for show in result %}
+            <tr>
+              <td>
+                {{show.seriesname}} {% if show.imdb_id %}<a href="http://www.imdb.com/title/{{show.imdb_id}}/" target="_blank"><img src="/static/img/imdb-icon24.png"/ class="imdb-icon"></a>{% endif %}
+              </td>
+              <td>{{show.firstaired}} </td>
+              <td>
+                <a class="btn btn-success" href="/show/add/{{choice}}/{{show.seriesid}}/?name={{show.seriesname|u}}&first_aired={{show.firstaired}}{% if request.args.folder %}&folder={{request.args.folder|u}}{% endif %}">
+                  <i class="icon-plus icon-white"></i> Add
+                </a>
+              </td>
+            </tr>
+           {% endfor %}
+        </table>
+        {% else %}
+        <div class="alert">
+          No results found for <strong>&quot;{{query}}&quot;</strong>
+        </div>
+        {% endif %}
+
+
+    </div>
+</div>
+
+{% endblock %}
