@@ -1,0 +1,12 @@
+language: python
+python:
+  - "2.7"
+install:
+  - pip install requests
+        'requests>=0.14.0',
+  - pip install transmissionrpc
+  - pip install peewee
+  - pip install Flask
+  - pip install Jinja2
+# command to run tests, e.g. python setup.py test
+script: python test.py
