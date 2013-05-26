@@ -234,7 +234,7 @@ def urlencode_filter(s):
     s = urllib.quote_plus(s)
     return s
 
-if __name__ == '__main__':
+def main():
     # Start background tasks to search and download
     #tasks = ['background_search','background_download','background_status']
     #t = Tasks(tasks, 30)
@@ -262,3 +262,6 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0')
     app.logger.debug('Webserver started')
     #process_download_torrent()
+
+#if __name__ == '__main__':
+#    main()

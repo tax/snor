@@ -1,5 +1,5 @@
 import transmissionrpc
-from clients import BaseCLient
+from snor.clients import BaseCLient
 
 
 

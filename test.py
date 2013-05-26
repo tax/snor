@@ -1,9 +1,10 @@
 import unittest
 import os
-import clients
-import server
 import requests
-import conf
+import snor
+import snor.conf as conf
+import snor.clients as clients
+
 
 class TestSettings(unittest.TestCase):
     def setUp(self):
@@ -26,7 +27,7 @@ class TestSettings(unittest.TestCase):
 
 class TestSite(unittest.TestCase):
     def setUp(self):
-        self.app = server.app.test_client()
+        self.app = snor.app.test_client()
         #Go back to default settings
         if os.path.exists('settings.json'):
             os.remove('settings.json')
@@ -38,7 +39,7 @@ class TestSite(unittest.TestCase):
     def test_login_not_required(self):
         #r = requests.get(self.url)
         r = self.app.get('/')
-        self.assertIn('Welcome to XX', r.data) 
+        self.assertIn('Welcome to snor', r.data) 
         
     def test_login_required(self):
         d = { 'login_required':'login' }
@@ -50,7 +51,7 @@ class TestSite(unittest.TestCase):
         r = self.app.post('/login/', data={
             'username':'admin', 'password':'admin'
         }, follow_redirects=True)        
-        self.assertIn('Welcome to XX', r.data) 
+        self.assertIn('Welcome to snor', r.data) 
         # Logout again
         r = self.app.get('/logout/', follow_redirects=True)        
         self.assertIn('Logged out', r.data) 

@@ -18,7 +18,7 @@ VIDEO_EXTENSIONS = (
     '3gp'
 )
 
-
+dirname = os.path.dirname(__file__)
 db = peewee.SqliteDatabase('database.db')
 
 class Show(peewee.Model):

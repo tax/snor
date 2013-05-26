@@ -45,7 +45,7 @@ class BaseCLient():
 
 
 def get_torrent_client(client_name):
-    module = 'clients.' + client_name
+    module = 'snor.clients.' + client_name
     try:
         m = __import__(module, globals(), locals(), ['Client'], -1)
         client = m.Client()
@@ -56,7 +56,8 @@ def get_torrent_client(client_name):
 
 def get_torrent_clients():
     files = []
-    for f in os.listdir(os.curdir + '/clients'):
+    dirname = os.path.dirname(__file__)
+    for f in os.listdir(dirname):
         if f.endswith('.py') and f != '__init__.py':
             files.append(f[:-3])
     return files

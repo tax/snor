@@ -14,7 +14,7 @@ if sys.argv[-1] == 'publish':
 
 setup(
     name='snor',
-    version='0.0.1',
+    version='0.0.2',
     author='Paul Tax',
     author_email='paultax@gmail.com',
     include_package_data=True,
@@ -26,6 +26,11 @@ setup(
         'Jinja2>=2.6'
     ],
     py_modules=['snor'],
+    entry_points={
+        'console_scripts': [
+            'snor = httpbin.server:main',
+        ],
+    }    
     url='https://github.com/tax/snor',
     license='BSD licence, see LICENCE.txt',
     description='A very lightweight "sickbeard for torrents" ',

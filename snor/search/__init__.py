@@ -34,7 +34,7 @@ class BaseCLient():
 
 
 def get_search_client(client_name):
-    module = 'search.' + client_name
+    module = 'snor.search.' + client_name
     try:
         m = __import__(module, globals(), locals(), ['Client'], -1)
         client = m.Client()
@@ -45,7 +45,8 @@ def get_search_client(client_name):
 
 def get_search_clients():
     files = []
-    for f in os.listdir(os.curdir + '/search'):
+    dirname = os.path.dirname(__file__)
+    for f in os.listdir(dirname):
         if f.endswith('.py') and f != '__init__.py':
             files.append(f[:-3])
     return files

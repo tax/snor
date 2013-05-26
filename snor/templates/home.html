@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block container %}
+<div class="row">
+
+    <div class="span10 left">
+      <div class="white-panel">
+      {% if not shows %}
+      <h3>Welcome to snor</h3>
+      <p>You dont have any shows in your download list yet <a href="/show/add/">add a show here</a></p>
+
+      {% else %}
+        <table class="table table-bordered">    
+          <thead>
+              <tr>
+                <th width="60%">Name</th>
+                <th width="20%">Start date</th>
+                <th width="20%">Status</th>
+              </tr>
+          </thead>
+          <tbody>
+          {% for show in shows %}
+              <tr>
+                <td><a href="/show/{{show.id}}/">{{show.seriesname}}</a></td>
+                <td>{{show.firstaired.strftime('%Y-%m-%d')}}</td>
+                <td>{{show.status}}</td>
+              </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}  
+      </div>
+    </div>  
+
+</div>
+
+{% endblock %}
