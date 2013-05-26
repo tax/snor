@@ -2,3 +2,4 @@
 *.pyc
 *.*~
 settings.json
+database.db

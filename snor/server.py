@@ -15,13 +15,14 @@ import search
 
 
 LOGFILE_NAME = 'debug.log'
+MB = 1024 * 1024 * 1024
 
 app = Flask(__name__)
 app.secret_key = str(settings.secret_key)
 app.config['LOGGER_NAME'] = 'snor_log'
 
 # Create logger
-handler = RotatingFileHandler(LOGFILE_NAME, maxBytes=10000, backupCount=1)
+handler = RotatingFileHandler(LOGFILE_NAME, maxBytes=MB, backupCount=1)
 handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s\t%(message)s"))
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
@@ -239,21 +240,12 @@ def main():
     #tasks = ['background_search','background_download','background_status']
     #t = Tasks(tasks, 30)
     #t.start()
-
     # def signal_exit(signal, frame):
     #     t.stop()
     #     sys.exit(0)    
 
     # signal.signal(signal.SIGINT, signal_exit)
 
-    # try:
-    #     Show.drop_table()
-    #     Episode.drop_table()
-    # except:
-    #     pass
-    # Show.create_table()
-    # Episode.create_table()
-    # 
 
     # Start webserver
     app.debug = True

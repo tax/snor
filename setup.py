@@ -28,7 +28,7 @@ setup(
     py_modules=['snor'],
     entry_points={
         'console_scripts': [
-            'snor = httpbin.server:main',
+            'snor = snor.server:main',
         ],
     }    
     url='https://github.com/tax/snor',
