@@ -25,12 +25,16 @@ setup(
         'Flask>=0.9',
         'Jinja2>=2.6'
     ],
-    py_modules=['snor'],
+    packages=[
+        'snor', 
+        'snor.search',
+        'snor.clients'
+    ],
     entry_points={
         'console_scripts': [
             'snor = snor.server:main',
         ],
-    }    
+    }, 
     url='https://github.com/tax/snor',
     license='BSD licence, see LICENCE.txt',
     description='A very lightweight "sickbeard for torrents" ',
