@@ -1,3 +1,5 @@
 include README.md
 include snor/templates/*
-include snor/static/*
+include snor/static/img/*
+include snor/static/js/*
+include snor/static/css/*
