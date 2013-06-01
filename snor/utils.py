@@ -51,6 +51,7 @@ def save_show(choice='new', **kwargs):
         d = { k:v for k,v in dict(kwargs.items() + show.items()).items() if k in vk}
         d['tvdb_id'] = d['id']
         del d['id']        
+        d['date_last_updated'] = datetime.datetime.now()
         s.update(**d).execute()
     
     s.save_episodes(kwargs.has_key('download_new_only'))
@@ -98,8 +99,7 @@ def process_download_torrent():
     eps = Episode.select().join(Show).where(
         Show.is_active == True, 
         Episode.status == FOUND
-    )    
-    print eps
+    )
     tc = clients.get_torrent_client(settings.client)
     for e in eps:
         try:
@@ -126,7 +126,19 @@ def process_check_downloaded():
     ).group_by(Show)
 
     for s in shows:
-        s.check_download_status()
+        res.append(s.check_download_status())
+    return res
+
+def process_check_new_episodes():
+    res = []
+    # Only check after 24 hours 
+    yesterday = datetime.datetime.now() - datetime.timedelta(1)
+    shows = Show.select().where(
+        date_last_updated > yesterday
+    )
+    for s in shows:
+        res.append(save_show(tvdb_id = s.tvdb_id))
+    return res
 
 def build_filter(key, value, operator):
 
@@ -219,7 +231,8 @@ class Tasks(threading.Thread):
             for t in self.tasks:
                 url = 'http://localhost:5000/api/?method={t}/'.format(t=t)
                 r = requests.post(url)
-                time.sleep(self.seconds)
+                logger.info(r.content)
+            time.sleep(self.seconds)
 
     def stop(self):
         self.quit = True    

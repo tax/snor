@@ -208,6 +208,7 @@ def api(**kwargs):
         'episode_mark_downloaded' : episode_mark_downloaded,
         'background_search' : process_search_torrent,
         'background_download' : process_download_torrent,
+        'background_update' : process_check_new_episodes,
         'background_status' : process_check_downloaded        
     }
 
@@ -237,14 +238,19 @@ def urlencode_filter(s):
 
 def main():
     # Start background tasks to search and download
-    #tasks = ['background_search','background_download','background_status']
-    #t = Tasks(tasks, 30)
-    #t.start()
-    # def signal_exit(signal, frame):
-    #     t.stop()
-    #     sys.exit(0)    
+    tasks = [
+        'background_search',
+        'background_download',
+        'background_status', 
+        'background_update'
+    ]
+    t = Tasks(tasks, 5 * 30)
+    t.start()
+    def signal_exit(signal, frame):
+        t.stop()
+        sys.exit(0)    
 
-    # signal.signal(signal.SIGINT, signal_exit)
+    signal.signal(signal.SIGINT, signal_exit)
 
 
     # Start webserver
@@ -255,5 +261,5 @@ def main():
     app.logger.debug('Webserver started')
     #process_download_torrent()
 
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+   main()
