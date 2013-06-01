@@ -223,13 +223,13 @@ class Tasks(threading.Thread):
         self.seconds = seconds
 
     def run(self):
-        # Wait for 10 seconds for webserver to start
-        time.sleep(10)
+        # Wait for 1 minute for webserver to start
+        time.sleep(60)
 
         while not self.quit:
             print 'RUN'
             for t in self.tasks:
-                url = 'http://localhost:5000/api/?method={t}/'.format(t=t)
+                url = 'http://localhost:5000/api/?action={t}'.format(t=t)
                 r = requests.post(url)
                 logger.info(r.content)
             time.sleep(self.seconds)
