@@ -2,4 +2,6 @@
 *.pyc
 *.*~
 debug.log
+dist/
+snor.egg-info/
 snor_database.db

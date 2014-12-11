@@ -240,7 +240,7 @@ def urlencode_filter(s):
     return s
 
 
-def start_server():
+def main():
     # Create db and tables if it doesn't exist
     utils.create_database()
     # Start background tasks to search and download
@@ -262,7 +262,3 @@ def start_server():
     app.secret_key = str(settings.secret_key)
     app.run(host='0.0.0.0', debug=True, use_reloader=False)
     app.logger.debug('Webserver started')
-    #process_download_torrent()
-
-# if __name__ == '__main__':
-#     main()

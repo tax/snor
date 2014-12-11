@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from snor.server import start_server
+from snor.server import main
 
 if __name__ == '__main__':
-    start_server()
-#main()
+    main()
