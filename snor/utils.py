@@ -224,11 +224,13 @@ def create_database(destroy_existing=False):
 
 
 class Tasks(threading.Thread):
-    def __init__(self, tasks, seconds):
+    def __init__(self, tasks, seconds, host, port):
         threading.Thread.__init__(self)
         self.quit = False
         self.tasks = tasks
         self.seconds = seconds
+        self.host = host
+        self.port = port
 
     def run(self):
         counter = 0
@@ -237,7 +239,8 @@ class Tasks(threading.Thread):
                 counter = 0
                 logger.info('Run background tasks')
                 for t in self.tasks:
-                    url = 'http://localhost:5000/api/?action={t}'.format(t=t)
+                    url = 'http://{host}:{port}/api/?action={task}'
+                    url = url.format(task=t, host=self.host, port=self.port)
                     r = requests.post(url)
                     logger.info(r.content)
             counter += 1
