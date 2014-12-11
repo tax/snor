@@ -1,18 +1,19 @@
 import requests
-from snor.clients import BaseCLient
+import re
+from . import BaseCLient
+
 
 class Client(BaseCLient):
     _name = 'utorrent'
     _settings = {
-        'port': 9091,
-        'address':'localhost', 
-        'user':None,
-        'password':None
+        'port': 61137,
+        'address': 'localhost',
+        'user': 'admin',
+        'password': 'password'
     }
 
-    def add_magnet_link(self, url, dowload_dir):
-        magnet_url = url
-        auth = (self._settings['user'],self._settings['password'])
+    def add_magnet_hash(self, magnet_hash, download_dir):
+        auth = (self._settings['user'], self._settings['password'])
         url = 'http://{address}:{port}/gui/'.format(**self._settings)
         r = requests.get(url + 'token.html', auth=auth)
         cookie = r.cookies
@@ -22,15 +23,24 @@ class Client(BaseCLient):
         token = match.group(1)
 
         #Set to correct download folder
-        d = download_dir
-        p = {'token':token, 'action':'setsetting', 's':'dir_completed_download', 'v':d}
+        p = {
+            'token': token,
+            'action': 'setsetting',
+            's': 'dir_completed_download',
+            'v': download_dir
+        }
         r = requests.get(url, params=p, auth=auth, cookies=cookie)
-        print r.status_code
-        p = {'token':token, 'action':'setsetting', 's':'dir_completed_download_flag', 'v':'1'}
+        p = {
+            'token': token,
+            'action': 'setsetting',
+            's': 'dir_completed_download_flag',
+            'v': '1'
+        }
         requests.get(url, params=p, auth=auth, cookies=cookie)
         # Add magnet hash
-        p = {'token':token, 'action':'add-url', 's':magnet_url}
-        requests.get(url, params=p, auth=auth, cookies=cookie)
+        magnet_url = 'magnet:?xt=urn:btih:{0}'.format(magnet_hash)
+        p = {'token': token, 'action': 'add-url', 's': magnet_url}
+        r = requests.get(url, params=p, auth=auth, cookies=cookie)
 
     def get_completed(self):
         print 'Completed'

@@ -1,18 +1,16 @@
 import transmissionrpc
-from snor.clients import BaseCLient
-
-
+from . import BaseCLient
 
 
 class Client(BaseCLient):
     _name = 'transmission'
     _settings = {
         'port': 9091,
-        'address':'localhost', 
-        'user':None,
-        'password':None
+        'address': 'localhost',
+        'user': None,
+        'password': None
     }
-    
+
     def add_magnet_hash(self, magnet_hash, download_dir):
         c = transmissionrpc.Client(**self.get_settings())
         url = 'magnet:?xt=urn:btih:{h}'.format(h=magnet_hash)

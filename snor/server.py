@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 import os
-import time
+import sys
 import urllib
 import signal
 import logging
@@ -8,8 +9,10 @@ from functools import wraps
 from flask import Flask
 from flask import jsonify, redirect, request, render_template, session, make_response
 from conf import settings
-from models import *
-from utils import *
+from models import Episode, Show
+from utils import Tasks
+import utils
+import models
 import clients
 import search
 
@@ -18,14 +21,16 @@ LOGFILE_NAME = 'debug.log'
 MB = 1024 * 1024 * 1024
 
 app = Flask(__name__)
-app.secret_key = str(settings.secret_key)
+app.secret_key = 'SECRET_FOR_TESTING'
 app.config['LOGGER_NAME'] = 'snor_log'
 
 # Create logger
 handler = RotatingFileHandler(LOGFILE_NAME, maxBytes=MB, backupCount=1)
-handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s\t%(message)s"))
+frmt = logging.Formatter("%(asctime)s %(levelname)s\t%(message)s")
+handler.setFormatter(frmt)
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
+
 
 def login_required(f):
     @wraps(f)
@@ -35,9 +40,10 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.route('/login/', methods=['GET','POST'])
+
+@app.route('/login/', methods=['GET', 'POST'])
 def login():
-    msg = request.args.get('msg','')
+    msg = request.args.get('msg', '')
     if request.method == 'POST':
         if not settings.login_required:
             return redirect('/')
@@ -71,26 +77,27 @@ def logfile():
     response.headers["Content-type"] = "text/plain"
     return response
 
-@app.route('/settings/', methods=['GET','POST'])
+
+@app.route('/settings/', methods=['GET', 'POST'])
 @login_required
 def configuration():
-    c ={
-        'clients' : clients.get_torrent_clients(),
-        'search_clients' : search.get_search_clients(),
-        'settings' : settings
+    c = {
+        'clients': clients.get_torrent_clients(),
+        'search_clients': search.get_search_clients(),
+        'settings': settings
     }
 
     if request.method == 'POST':
         try:
             new = request.form.to_dict()
             new['login_required'] = new['login_required'] == 'login'
-            new['use_season_folders'] = new.has_key('use_season_folders')
-            new['download_new_only'] = new.has_key('download_new_only')
+            new['use_season_folders'] = 'use_season_folders' in new
+            new['download_new_only'] = 'download_new_only' in new
             # Dont overwrite secret key
             new['secret_key'] = app.secret_key
-            settings.set_settings(**new)        
+            settings.set_settings(**new)
             c['msg'] = 'Saved settings'
-        except Exception,ex:
+        except Exception, ex:
             c['msg'] = str(ex)
     return render_template('settings.html', **c)
 
@@ -98,8 +105,6 @@ def configuration():
 @app.route('/show/add/')
 @login_required
 def show_add_choice():
-    app.logger.info('bla bla bla')   
-    print app.logger_name 
     return render_template('show_add_choice.html')
 
 
@@ -107,42 +112,44 @@ def show_add_choice():
 @login_required
 def get_show(show_id):
     c = {
-        'show' : Show.get(id=show_id),
-        'episodes' : Episode.select().join(Show).where(Show.id == show_id)
+        'show': Show.get(id=show_id),
+        'episodes': Episode.select().join(Show).where(Show.id == show_id)
     }
     return render_template('show.html', **c)
+
 
 @app.route('/show/<int:show_id>/settings/', methods=['GET', 'POST'])
 @login_required
 def get_show_settings(show_id):
     s = Show.get(id=show_id)
     c = {
-        'show' : s,
-        'settings' : settings,
-        'choice' : 'saved_show'
+        'show': s,
+        'settings': settings,
+        'choice': 'saved_show'
     }
     if request.method == 'POST':
         s.folder = request.form['folder']
         s.filters = request.form['filters']
-        s.use_season_folders = request.form.has_key('use_season_folders')
+        s.use_season_folders = 'use_season_folders' in request.form
         s.save()
         msg = 'Successfully saved settings'
         return redirect('/show/{id}/?msg={msg}'.format(id=show_id, msg=msg))
     return render_template('show_add.html', **c)
 
+
 @app.route('/show/add/<choice>/', methods=['GET', 'POST'])
 @login_required
 def search_show(choice):
-    if request.method == 'POST' or request.args.has_key('folder'):
-        if request.args.has_key('folder'):
-            q = os.path.basename(request.args.get('folder',''))
+    if request.method == 'POST' or 'folder' in request.args:
+        if 'folder' in request.args:
+            q = os.path.basename(request.args.get('folder', ''))
         else:
             q = request.form['q']
-        shows = find_shows(q)
+        shows = utils.find_shows(q)
         return render_template(
-            'search_result.html', 
-            result=shows, 
-            choice=choice, 
+            'search_result.html',
+            result=shows,
+            choice=choice,
             query=q
         )
     return render_template('search.html', choice=choice)
@@ -152,24 +159,24 @@ def search_show(choice):
 @login_required
 def add_show(choice, show_id):
     if request.method == 'POST':
-        pk = save_show(choice=choice, **request.form.to_dict())
+        pk = utils.save_show(choice=choice, **request.form.to_dict())
         return redirect('/show/{id}/'.format(id=pk))
-    c ={
-        'choice' : choice, 
-        'show_id' : show_id,
-        'settings' : settings
-    }    
-    return render_template('show_add.html', **c)
+    kwargs = {
+        'choice': choice,
+        'show_id': show_id,
+        'settings': settings
+    }
+    return render_template('show_add.html', **kwargs)
 
 
 @app.route('/list/dir/')
 @login_required
 def list_dir():
-    res = list_directory(request.args.get('folder',settings.folder))
+    res = utils.list_directory(request.args.get('folder', settings.folder))
     return jsonify(**res)
 
 
-@app.route('/api/', methods=['POST'])
+@app.route('/api/', methods=['POST', 'GET'])
 @login_required
 def api(**kwargs):
     args = []
@@ -182,53 +189,49 @@ def api(**kwargs):
         show.delete_instance(recursive=True)
 
     def update_show(show):
-        return save_show(tvdb_id = show.tvdb_id)
+        return utils.save_show(tvdb_id=show.tvdb_id)
 
     def episode_mark_skipped(episode):
-        episode.status = SKIPPED
+        episode.status = models.SKIPPED
         episode.save()
 
     def episode_mark_wanted(episode):
-        episode.status = WANTED
+        episode.status = models.WANTED
         episode.save()
 
-
     def episode_mark_downloaded(episode, location):
-        episode.status = DOWNLOADED
+        episode.status = models.DOWNLOADED
         episode.location = location
         episode.save()
 
-
     actions = {
-        'scan' : scan_show,
-        'delete' : delete_show,
-        'update' : update_show,
-        'episode_mark_wanted' : episode_mark_wanted,
-        'episode_mark_skipped' : episode_mark_skipped,
-        'episode_mark_downloaded' : episode_mark_downloaded,
-        'background_search' : process_search_torrent,
-        'background_download' : process_download_torrent,
-        'background_update' : process_check_new_episodes,
-        'background_status' : process_check_downloaded        
+        'scan': scan_show,
+        'delete': delete_show,
+        'update': update_show,
+        'episode_mark_wanted': episode_mark_wanted,
+        'episode_mark_skipped': episode_mark_skipped,
+        'episode_mark_downloaded': episode_mark_downloaded,
+        'background_search': utils.process_search_torrent,
+        'background_download': utils.process_download_torrent,
+        'background_update': utils.process_check_new_episodes,
+        'background_status': utils.process_check_downloaded
     }
 
-    if not actions.has_key(action):
+    if not action in actions:
         msg = 'No action named {}'.format(action)
-        return jsonify(stat='fail', msg=msg, result=[])    
+        return jsonify(stat='fail', msg=msg, result=[])
 
-    if request.args.has_key('show_id'):
+    if 'show_id' in request.args:
         args.append(Show.get(id=request.args['show_id']))
-    if request.args.has_key('episode_id'):
+    if 'episode_id' in request.args:
         args.append(Episode.get(id=request.args['episode_id']))
-    if request.args.has_key('location'):
+    if 'location' in request.args:
         args.append(request.args['location'])
 
-    res = actions[action](*args)        
+    res = actions[action](*args)
     return jsonify(stat='ok', result=res)
 
-    
 
-    
 @app.template_filter('u')
 @app.template_filter('urlencode')
 def urlencode_filter(s):
@@ -236,30 +239,30 @@ def urlencode_filter(s):
     s = urllib.quote_plus(s)
     return s
 
-def main():
+
+def start_server():
+    # Create db and tables if it doesn't exist
+    utils.create_database()
     # Start background tasks to search and download
     tasks = [
         'background_search',
         'background_download',
-        'background_status', 
+        'background_status',
         'background_update'
     ]
     t = Tasks(tasks, 5 * 30)
     t.start()
+
     def signal_exit(signal, frame):
         t.stop()
-        sys.exit(0)    
+        sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_exit)
-
-
     # Start webserver
-    app.debug = True
-    #app.run()
-
-    app.run(host='0.0.0.0')
+    app.secret_key = str(settings.secret_key)
+    app.run(host='0.0.0.0', debug=True, use_reloader=False)
     app.logger.debug('Webserver started')
     #process_download_torrent()
 
-if __name__ == '__main__':
-   main()
+# if __name__ == '__main__':
+#     main()

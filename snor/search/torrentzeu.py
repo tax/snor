@@ -1,13 +1,12 @@
 import requests
 import xml.etree.cElementTree as et
-from search import BaseCLient
-
+from . import BaseCLient
 
 
 class Client(BaseCLient):
     name = 'torrentz.eu'
 
-    def search(self, show_name, episode_code):       
+    def search(self, show_name, episode_code):
         result = []
         url = 'http://torrentz.eu/feed?q={0}+{1}'
 
@@ -15,9 +14,9 @@ class Client(BaseCLient):
         t = et.fromstring(r.content)
 
         for ch in t.findall('channel/item'):
-            d = { item.tag.lower(): item.text for item in ch }
+            d = {item.tag.lower(): item.text for item in ch}
 
-            res = { 'name':d['title'] }
+            res = {'name': d['title']}
             split = d['description'].split(' ')
             if len(split) == 9:
                 res['size'] = split[1]

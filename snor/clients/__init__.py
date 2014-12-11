@@ -1,13 +1,20 @@
 import os
 import json
+import datetime
+from ..models import Setting
+
 
 class BaseCLient():
     _settings = {}
     _name = 'base'
 
     def __init__(self):
-        # Dont initialize client because it could raise an error 
-        pass  
+        # Dont initialize client because it could raise an error
+        pass
+
+    @property
+    def setting_name(self):
+        return 'client.{0}.conf'.format(self._name)
 
     def add_magnet_hash(self, hash, dowload_dir):
         raise NotImplementedError
@@ -19,29 +26,31 @@ class BaseCLient():
         raise NotImplementedError
 
     def get_settings(self):
-        filename = 'settings.{n}.json'.format(n=self._name)
         try:
-            f = open(filename, 'r')
-            return json.loads(f.read())
+            setting = Setting.get(name=self.setting_name)
+            return json.loads(setting.value)
         except:
-            pass
+            Setting.create(
+                name=self.setting_name,
+                value=json.dumps(self._settings)
+            )
         return self._settings
 
     def set_settings(self, **kwargs):
-        filename = 'settings.{n}.json'.format(n=self._name)
-        
-        # If values vary from default values save to disk
-        if kwargs != self._settings:
-            f = open(filename, 'w+')
-            f.write(json.dumps(kwargs))
-        else:
-            try:
-                os.remove(filename)
-            except:
-                pass
-
-
-        
+        # Only copy valid keys fallback to default settings
+        vk = self._settings.keys()
+        kwargs = {k: v for k, v in kwargs.items() if k in vk}
+        kwargs = dict(self._settings.items() + kwargs.items())
+        try:
+            s = Setting.get(name=self.setting_name)
+            s.value = json.dumps(kwargs)
+            s.save()
+        except:
+            Setting.create(
+                name=self.setting_name,
+                value=json.dumps(kwargs),
+                date_last_updated=datetime.datetime.now()
+            )
 
 
 def get_torrent_client(client_name):
@@ -50,9 +59,10 @@ def get_torrent_client(client_name):
         m = __import__(module, globals(), locals(), ['Client'], -1)
         client = m.Client()
         return client
-    except ImportError,ex:
+    except ImportError, ex:
         msg = 'Could not load torrent client {c}'.format(c=client_name)
         raise ImportError(msg)
+
 
 def get_torrent_clients():
     files = []
@@ -61,4 +71,3 @@ def get_torrent_clients():
         if f.endswith('.py') and f != '__init__.py':
             files.append(f[:-3])
     return files
-

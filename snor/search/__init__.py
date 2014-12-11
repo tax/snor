@@ -1,24 +1,26 @@
 import os
-import json
+
 
 class BaseCLient():
-    _name = 'base'
-    _result_keys = ['size','seeds','peers']
+    name = 'base'
+    _result_keys = ['size', 'seeds', 'peers']
 
     def __init__(self):
         """
-        Dont initialize client because it could raise an error 
+        Dont initialize client because it could raise an error
         """
-        pass  
+        pass
 
     @property
     def valid_filters(self):
         """
         Returns list with valid filter keys name and hash are mandatory.
         """
-        return self._result_keys.append(['name','hash'])
+        filters = self._result_keys
+        filters.extend(['name', 'hash'])
+        return filters
 
-    def search(self, show_name, episode_code):        
+    def search(self, show_name, episode_code):
         """
         Returns a list with dicts with the search results .
 
@@ -30,7 +32,7 @@ class BaseCLient():
         raise NotImplementedError
 
     def is_active(self):
-        raise NotImplementedError        
+        raise NotImplementedError
 
 
 def get_search_client(client_name):
@@ -39,9 +41,11 @@ def get_search_client(client_name):
         m = __import__(module, globals(), locals(), ['Client'], -1)
         client = m.Client()
         return client
-    except ImportError,ex:
+    except ImportError, ex:
+        print str(ex)
         msg = 'Could not load search client {c}'.format(c=client_name)
         raise ImportError(msg)
+
 
 def get_search_clients():
     files = []
@@ -50,4 +54,3 @@ def get_search_clients():
         if f.endswith('.py') and f != '__init__.py':
             files.append(f[:-3])
     return files
-

@@ -1,5 +1,5 @@
 .DS_Store
 *.pyc
 *.*~
-settings.json
-database.db
+debug.log
+snor_database.db

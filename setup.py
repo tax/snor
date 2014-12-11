@@ -26,7 +26,7 @@ setup(
         'Jinja2>=2.6'
     ],
     packages=[
-        'snor', 
+        'snor',
         'snor.search',
         'snor.clients'
     ],
@@ -34,7 +34,7 @@ setup(
         'console_scripts': [
             'snor = snor.server:main',
         ],
-    }, 
+    },
     url='https://github.com/tax/snor',
     license='BSD licence, see LICENCE.txt',
     description='A very lightweight "sickbeard for torrents" ',
