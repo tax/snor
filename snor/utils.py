@@ -1,4 +1,6 @@
 import os
+import sys
+import signal
 import time
 import ctypes
 import itertools
@@ -249,3 +251,19 @@ class Tasks(threading.Thread):
 
     def stop(self):
         self.quit = True
+
+
+def start_background_tasks(host, port):
+    # Start background tasks to search and download
+    tasks = [
+        'background_search', 'background_download',
+        'background_status', 'background_update'
+    ]
+    t = Tasks(tasks, host=host, port=port, seconds=5 * 30)
+    t.start()
+
+    def signal_exit(signal, frame):
+        t.stop()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_exit)

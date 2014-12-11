@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
 import urllib
-import signal
 import logging
 import argparse
 from logging.handlers import RotatingFileHandler
@@ -11,7 +9,6 @@ from flask import Flask
 from flask import jsonify, redirect, request, render_template, session, make_response
 from conf import settings
 from models import Episode, Show
-from utils import Tasks
 import utils
 import models
 import clients
@@ -241,32 +238,16 @@ def urlencode_filter(s):
     return s
 
 
-def start_background_tasks(host, port):
-    # Start background tasks to search and download
-    tasks = [
-        'background_search', 'background_download',
-        'background_status', 'background_update'
-    ]
-    t = Tasks(tasks, 5 * 30)
-    t.start()
-
-    def signal_exit(signal, frame):
-        t.stop()
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, signal_exit)
-
-
 def main():
     # Create db and tables if it doesn't exist
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', default=5555, type=int)
     parser.add_argument('--host', default='0.0.0.0')
-    parser.add_argument('--port', default=5555, type=int)
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
 
     utils.create_database()
-    start_background_tasks(args.host, args.port)
+    utils.start_background_tasks(args.host, args.port)
     # Start webserver
     app.secret_key = str(settings.secret_key)
     app.run(
