@@ -187,7 +187,7 @@ def list_directory(current):
         res['result'].append(f)
 
     try:
-        for item in sorted(os.listdir(current)):
+        for item in sorted(os.listdir(current), key=lambda s: s.lower()):
             f = {
                 'path': os.path.join(current, item),
                 'name': item,

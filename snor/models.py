@@ -60,7 +60,9 @@ class Show(peewee.Model):
                 )
 
         for e in episodes:
-            l = lambda x: e.get_code() in os.path.basename(x).upper()
+            l = lambda x: e.get_code() in os.path.basename(x).upper() or \
+                e.get_code(short=True) in os.path.basename(x).upper()
+            
             found = filter(l, vids)
             if found:
                 e.location = found[0]
@@ -147,20 +149,22 @@ class Episode(peewee.Model):
         return 'magnet:?xt=urn:btih:{h}'.format(h=self.magnet_hash)
 
     def get_download_dir(self):
-        directory = self.show.folder
+        directory = self.show.folder.rstrip('/')
         if self.show.use_season_folders:
             se = self.seasonnumber
             if se < 10:
-                directory += 'Season 0{s}'.format(s=se)
+                directory += '/Season 0{s}'.format(s=se)
             else:
-                directory += 'Season {s}'.format(s=se)
+                directory += '/Season {s}'.format(s=se)
         return directory
 
-    def get_code(self):
+    def get_code(self, short=False):
         ep = self.episodenumber
+        se = self.seasonnumber
         if ep < 10:
             ep = '0{e}'.format(e=ep)
-        se = self.seasonnumber
+        if short:
+            return '{s}{e}'.format(s=se, e=ep)
         if se < 10:
             se = '0{s}'.format(s=se)
         return 'S{s}E{e}'.format(s=se, e=ep)
@@ -181,6 +185,9 @@ class Setting(peewee.Model):
     value = peewee.TextField(null=True)
     date_added = peewee.DateTimeField(default=datetime.now)
     date_last_updated = peewee.DateTimeField(default=datetime.now)
+
+    def __unicode__(self):
+        return self.name
 
     class Meta:
         database = db
