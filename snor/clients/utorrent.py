@@ -4,10 +4,10 @@ from . import BaseCLient
 
 
 class Client(BaseCLient):
-    _name = 'utorrent'
+    name = 'utorrent'
     _settings = {
         'port': 61137,
-        'address': 'localhost',
+        'address': '127.0.0.1',
         'user': 'admin',
         'password': 'password'
     }
@@ -41,9 +41,6 @@ class Client(BaseCLient):
         magnet_url = 'magnet:?xt=urn:btih:{0}'.format(magnet_hash)
         p = {'token': token, 'action': 'add-url', 's': magnet_url}
         r = requests.get(url, params=p, auth=auth, cookies=cookie)
-
-    def get_completed(self):
-        print 'Completed'
 
     def is_active(self):
         return True

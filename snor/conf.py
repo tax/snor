@@ -14,6 +14,7 @@ class Conf():
         'password': 'admin',
         'filters': '',
         'secret_key': os.urandom(24).encode('base64'),
+        'api_key': os.urandom(24).encode('base64').replace('+', '-'),
         'folder': os.path.expanduser('~'),
         'client': clients.get_torrent_clients()[0],
         'search_client': search.get_search_clients()[0],

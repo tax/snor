@@ -1,7 +1,7 @@
 import os
 import peewee
 import requests
-import datetime
+from datetime import datetime
 import xml.etree.cElementTree as et
 
 
@@ -10,6 +10,7 @@ FOUND = 1
 DOWNLOADING = 2
 DOWNLOADED = 3
 SKIPPED = 4
+API_KEY = '103048D30C58E1F3'
 
 VIDEO_EXTENSIONS = (
     'avi', 'mkv', 'mpg', 'mpeg', 'wmv', 'ogm', 'mp4',
@@ -33,10 +34,10 @@ class Show(peewee.Model):
     filters = peewee.TextField(null=True)
     imdb_id = peewee.CharField(null=True)
     zap2it_id = peewee.CharField(null=True)
-    date_added = peewee.DateTimeField(default=datetime.datetime.now)
+    date_added = peewee.DateTimeField(default=datetime.now)
     date_updated = peewee.DateTimeField(null=True)
     firstaired = peewee.DateTimeField(null=True)
-    date_last_updated = peewee.DateTimeField(default=datetime.datetime.now)
+    date_last_updated = peewee.DateTimeField(default=datetime.now)
     airs_time = peewee.CharField(null=True)
     airs_dayofweek = peewee.CharField(null=True)
     is_active = peewee.BooleanField(default=True)
@@ -66,7 +67,7 @@ class Show(peewee.Model):
                 e.status = DOWNLOADED
                 e.save()
 
-    def save_episodes(self, skip=False):
+    def save_episodes(self, skip=False, skip_specials=False):
         status = WANTED
         if skip:
             status = SKIPPED
@@ -90,20 +91,19 @@ class Show(peewee.Model):
             Episode.update(status=WANTED).where(
                 Episode.status == SKIPPED,
                 Episode.show == self,
-                Episode.firstaired > datetime.datetime.now()
+                Episode.firstaired > datetime.now()
             ).execute()
 
-    def mark_completed(self):
-        #some_path = '/Volumes/media/Series/Mad Men'
-        files = []
-        for directory, dirnames, filenames in walk(self.folder):
-            files.append([f.lower() for f in filenames])
-        return files
+        if skip_specials:
+            Episode.update(status=SKIPPED).where(
+                Episode.seasonnumber == 0,
+                Episode.show == self,
+            ).execute()
 
     def _get_episodes(self):
         result = []
-        url = 'http://thetvdb.com/api/103048D30C58E1F3/series/{id}/all/'
-        r = requests.get(url.format(id=self.tvdb_id))
+        url = 'http://thetvdb.com/api/{api_key}/series/{id}/all/'
+        r = requests.get(url.format(id=self.tvdb_id, api_key=API_KEY))
         tree = et.fromstring(r.content)
         # Only use valid keys
         vk = Episode._meta.fields.keys()
@@ -130,8 +130,8 @@ class Episode(peewee.Model):
     episodenumber = peewee.IntegerField()
     overview = peewee.TextField(null=True)
     firstaired = peewee.DateTimeField(null=True)
-    date_added = peewee.DateTimeField(default=datetime.datetime.now)
-    date_last_updated = peewee.DateTimeField(default=datetime.datetime.now)
+    date_added = peewee.DateTimeField(default=datetime.now)
+    date_last_updated = peewee.DateTimeField(default=datetime.now)
     magnet_hash = peewee.CharField(null=True)
     status = peewee.IntegerField(default=0)
     show = peewee.ForeignKeyField(Show)
@@ -139,7 +139,7 @@ class Episode(peewee.Model):
     def get_status(self):
         s = ['wanted', 'found', 'downloading', 'downloaded', 'skipped']
         if self.status not in [DOWNLOADED, DOWNLOADING]:
-            if not self.firstaired or self.firstaired > datetime.datetime.now():
+            if not self.firstaired or self.firstaired > datetime.now():
                 return 'not aired'
         return s[self.status]
 
@@ -148,6 +148,12 @@ class Episode(peewee.Model):
 
     def get_download_dir(self):
         directory = self.show.folder
+        if self.show.use_season_folders:
+            se = self.seasonnumber
+            if se < 10:
+                directory += 'Season 0{s}'.format(s=se)
+            else:
+                directory += 'Season {s}'.format(s=se)
         return directory
 
     def get_code(self):
@@ -173,8 +179,8 @@ class Episode(peewee.Model):
 class Setting(peewee.Model):
     name = peewee.CharField(null=True)
     value = peewee.TextField(null=True)
-    date_added = peewee.DateTimeField(default=datetime.datetime.now)
-    date_last_updated = peewee.DateTimeField(default=datetime.datetime.now)
+    date_added = peewee.DateTimeField(default=datetime.now)
+    date_last_updated = peewee.DateTimeField(default=datetime.now)
 
     class Meta:
         database = db

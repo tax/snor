@@ -13,7 +13,7 @@
 
         
         
-        <div class="alert{% if not msg %} hide{% endif %}">
+        <div id="main_alert" class="alert{% if not msg %} hide{% endif %}">
             <strong>{{msg}}</strong>
         </div>
 
@@ -57,11 +57,21 @@
             </div>
 
             <div class="control-group">
+                <label class="control-label" for="api_key">API key:</label>
+                <div class="controls">
+                    <input class="span3" type="text" name="api_key" placeholder="API key" value="{{settings.api_key}}" />
+                </div>
+            </div>
+
+            <div class="control-group">
                 <label class="control-label" for="client">Torrent client:</label>
                 <div class="controls">
                     <select id="id_client" name="client">
-                        {% for c in clients %}<option {% if settings.client == c%}selected{% endif %}>{{c}}</option>{% endfor %}
+                    {% for c in clients %}
+                    <option {% if settings.client == c%}selected{% endif %}>{{c}}</option>
+                    {% endfor %}
                     </select>
+                    <button type="button" id="id_client_settings" class="btn"><i class="icon-wrench"></i> Settings</button>
                 </div>
             </div>
 
@@ -88,7 +98,7 @@
                 <label class="control-label" for="log">Logfile:</label>
                 <div class="controls">
                     <input class="span3" type="text" name="folder" value="/log/debug.log" disabled="true" />
-                    <a href="/log/" target="_blank" class="btn"><i class="icon-search"></i>View log </a>
+                    <a href="/log/" target="_blank" class="btn"><i class="icon-search"></i> View log </a>
                 </div>
             </div>
             
@@ -162,6 +172,27 @@
         </div>
     </div>
 </div>
+
+<div id="modalsettings" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close cancel_modal" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3></h3>
+  </div>
+  <div class="modal-body">
+    <div class="control-group">
+      <label class="control-label">
+        Setting should be valid <a href="http://json.org" target="_blank">JSON</a>
+      </label>
+      <div class="controls">
+        <textarea id="id_client_settings_json" rows="8" class="input-block-level" name="value"></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn cancel_modal" data-dismiss="modal">Cancel</button>
+    <button id="id_save_client_settings" class="btn btn-primary">Save</button>
+  </div>
+</div>
         
 {% include "modal_browse.html" %}
 
@@ -169,23 +200,23 @@
 
 {% block script %}
 <script>
-$("#id_form_settings").on('submit', function () {
+$('#id_form_settings').on('submit', function () {
     var p = $('input[name=password]').val();
     var pc = $('input[name=passwordconfirm]').val();
     if(p != pc){
-        $(".alert").removeClass('hide').addClass('alert-error');;
-        $(".alert strong").html('Passwords dont match');
+        $('#main_alert').removeClass('hide').addClass('alert-error');;
+        $('#main_alert strong').html('Passwords don&#39;t match');
         $('input[name=password],input[name=passwordconfirm]').parents('.control-group').addClass('error');
         return false;
     }
     else{
-        $(".alert").addClass('hide');
+        $('#main_alert strong').addClass('hide');
         $('input[name=password],input[name=passwordconfirm]').parents('.control-group').removeClass('error');
         return true;
     }
 });
 
-$("input[name=login_required]").change(function () {
+$('input[name=login_required]').change(function () {
     var v = $('input[name=login_required]:radio:checked').val();
     if(v == "nologin"){
         $('.login').attr('readonly','true')
@@ -206,6 +237,45 @@ $('#id_browse').on('click',function(e){
         }
     );  
 });
+
+$('#id_client_settings').on('click',function(e){
+    var client = $('#id_client').val();
+    var url = '/settings/client/' + client + '/';
+
+    $('#modalsettings h3').html('Settings for ' + client)
+    $.getJSON(url, function(data) {
+        var str = JSON.stringify(data.result, undefined, 2);
+        $('#id_client_settings_json').val(str);
+    });
+    $('#modalsettings').modal();
+});
+
+function isJsonString(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+$('#id_save_client_settings').on('click',function(e){
+    var client = $('#id_client').val();
+    var url = '/settings/client/' + client + '/';
+    var val = $('#id_client_settings_json').val();
+
+    if(isJsonString(val)){
+        $('#modalsettings div.alert').addClass('hide');
+        $('#id_client_settings_json').parents('.control-group').removeClass('error');
+        $.post(url, {'value': val}, function( data ) {
+          $('#modalsettings').modal('hide');
+        });
+    }
+    else{
+        $('#id_client_settings_json').parents('.control-group').addClass('error');
+    }
+});
+
 
 
 </script>

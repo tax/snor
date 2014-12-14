@@ -5,8 +5,8 @@ from ..models import Setting
 
 
 class BaseCLient():
+    name = 'base'
     _settings = {}
-    _name = 'base'
 
     def __init__(self):
         # Dont initialize client because it could raise an error
@@ -14,7 +14,7 @@ class BaseCLient():
 
     @property
     def setting_name(self):
-        return 'client.{0}.conf'.format(self._name)
+        return 'client.{0}.conf'.format(self.name)
 
     def add_magnet_hash(self, hash, dowload_dir):
         raise NotImplementedError

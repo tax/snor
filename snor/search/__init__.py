@@ -42,7 +42,6 @@ def get_search_client(client_name):
         client = m.Client()
         return client
     except ImportError, ex:
-        print str(ex)
         msg = 'Could not load search client {c}'.format(c=client_name)
         raise ImportError(msg)
 

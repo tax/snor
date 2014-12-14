@@ -3,10 +3,10 @@ from . import BaseCLient
 
 
 class Client(BaseCLient):
-    _name = 'transmission'
+    name = 'transmission'
     _settings = {
         'port': 9091,
-        'address': 'localhost',
+        'address': '127.0.0.1',
         'user': None,
         'password': None
     }
@@ -15,9 +15,6 @@ class Client(BaseCLient):
         c = transmissionrpc.Client(**self.get_settings())
         url = 'magnet:?xt=urn:btih:{h}'.format(h=magnet_hash)
         return c.add_torrent(url, download_dir=download_dir)
-
-    def get_completed(self):
-        print 'Completed'
 
     def is_active(self):
         try:

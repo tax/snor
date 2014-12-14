@@ -20,7 +20,6 @@ from conf import settings
 
 
 logger = logging.getLogger('snor_log')
-API_KEY = '103048D30C58E1F3'
 IS_WINDOWS = 'Windows' in platform.system()
 DB_NAME = 'snor_database.db'
 
@@ -40,7 +39,7 @@ def save_show(choice='new', **kwargs):
     # Download serie info from tvdb
     url = 'http://thetvdb.com/api/{api_key}/series/{id}/'
 
-    r = requests.get(url.format(id=kwargs['tvdb_id'], api_key=API_KEY))
+    r = requests.get(url.format(id=kwargs['tvdb_id'], api_key=models.API_KEY))
     t = et.fromstring(r.content)
     show = {i.tag.lower(): i.text for i in t.find('Series')}
 
@@ -51,14 +50,14 @@ def save_show(choice='new', **kwargs):
     else:
         s = list(shows)[0]
         # Only use valid keys
-        vk = Show._meta.fields.keys()
-        d = {k: v for k, v in dict(kwargs.items() + show.items()).items() if k in vk}
+        showdata = dict(kwargs.items() + show.items()).items()
+        d = {k: v for k, v in showdata if k in Show._meta.fields.keys()}
         d['tvdb_id'] = d['id']
         del d['id']
         d['date_last_updated'] = datetime.datetime.now()
         s.update(**d).execute()
 
-    s.save_episodes('download_new_only' in kwargs)
+    s.save_episodes('download_new_only' in kwargs, 'skip_specials' in kwargs)
 
     # Mark episodes as downloaded if they exist
     if choice == 'existing':
@@ -96,7 +95,6 @@ def process_search_torrent():
             msg['msg'] = 'Saved hash for {e}'.format(e=e)
             msg['stat'] = 'ok'
         res.append(msg)
-
     return res
 
 
@@ -126,7 +124,7 @@ def process_download_torrent():
 
 def process_check_downloaded():
     shows = Show.select().join(Episode).where(
-        Episode.status == models.WANTED,
+        Episode.status << [models.FOUND, models.DOWNLOADING],
         Episode.firstaired < datetime.datetime.now()
     ).group_by(Show)
     return [s.check_download_status() for s in shows]
@@ -189,7 +187,7 @@ def list_directory(current):
         res['result'].append(f)
 
     try:
-        for item in os.listdir(current):
+        for item in sorted(os.listdir(current)):
             f = {
                 'path': os.path.join(current, item),
                 'name': item,
@@ -236,13 +234,20 @@ class Tasks(threading.Thread):
 
     def run(self):
         counter = 0
+        url = 'http://{host}:{port}/api/?action={task}&api_key={api_key}'
+
         while not self.quit:
             if counter == self.seconds:
                 counter = 0
                 logger.info('Run background tasks')
                 for t in self.tasks:
-                    url = 'http://{host}:{port}/api/?action={task}'
-                    url = url.format(task=t, host=self.host, port=self.port)
+                    kwargs = {
+                        'task': t,
+                        'host': self.host,
+                        'port': self.port,
+                        'api_key': settings.api_key
+                    }
+                    url = url.format(**kwargs)
                     r = requests.post(url)
                     logger.info(r.content)
             counter += 1
@@ -259,7 +264,7 @@ def start_background_tasks(host, port):
         'background_search', 'background_download',
         'background_status', 'background_update'
     ]
-    t = Tasks(tasks, host=host, port=port, seconds=5 * 30)
+    t = Tasks(tasks, host=host, port=port, seconds=15 * 60)
     t.start()
 
     def signal_exit(signal, frame):

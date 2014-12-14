@@ -5,6 +5,7 @@ import logging
 import argparse
 from logging.handlers import RotatingFileHandler
 from functools import wraps
+import json
 from flask import Flask
 from flask import jsonify, redirect, request, render_template, session, make_response
 from conf import settings
@@ -33,9 +34,15 @@ app.logger.addHandler(handler)
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if settings.login_required and 'username' not in session:
-            return redirect('/login/')
-        return f(*args, **kwargs)
+        if not settings.login_required:
+            return f(*args, **kwargs)
+
+        api_key = request.args.get('api_key', None)
+        if 'username' in session or api_key == settings.api_key:
+            return f(*args, **kwargs)
+
+        return redirect('/login/')
+
     return decorated_function
 
 
@@ -98,6 +105,17 @@ def configuration():
         except Exception, ex:
             c['msg'] = str(ex)
     return render_template('settings.html', **c)
+
+
+@app.route('/settings/<string:group>/<string:name>/', methods=['GET', 'POST'])
+@login_required
+def setting(group, name):
+    obj = clients.get_torrent_client(name)
+    if request.method == 'POST':
+        kwargs = json.loads(request.form['value'])
+        obj.set_settings(**kwargs)
+    result = obj.get_settings()
+    return jsonify(stat='ok', result=result)
 
 
 @app.route('/show/add/')

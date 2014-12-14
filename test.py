@@ -1,4 +1,5 @@
 import unittest
+import json
 from snor.utils import create_database
 from snor.models import Show, Episode, Setting
 import snor.server as server
@@ -10,6 +11,7 @@ def reset_database():
     Show.delete().execute()
     Episode.delete().execute()
     Setting.delete().execute()
+
 
 class TestSettings(unittest.TestCase):
     def setUp(self):
@@ -40,9 +42,20 @@ class TestSite(unittest.TestCase):
         self.assertIn("You dont have any shows in your", r.data)
 
     def test_login_not_required(self):
-        #r = requests.get(self.url)
         r = self.app.get('/')
         self.assertIn('Welcome to snor', r.data)
+
+    def test_client_settings(self):
+        c = clients.get_torrent_client('transmission')
+        url = '/settings/client/transmission/'
+
+        r = self.app.get(url)
+        d = json.loads(r.data)['result']
+        self.assertEqual(d, c.get_settings())
+        d['address'] = '8.8.8.8'
+        r = self.app.post(url, data={'value': json.dumps(d)})
+        self.assertIn('"8.8.8.8"', r.data)
+        self.assertEqual(d, c.get_settings())
 
     def test_login_required(self):
         d = {'login_required': 'login'}
@@ -64,6 +77,35 @@ class TestSite(unittest.TestCase):
         self.assertIn('Logged out', r.data)
         self.assertIn('Please sign in', r.data)
 
+    def test_login_required_api(self):
+        d = {'login_required': 'login'}
+        # Save settings to require login
+        self.app.post('/settings/', data=d)
+
+        d = {'action': 'doesnotexist'}
+        api_key = conf.settings.api_key
+
+        r = self.app.post('/api/', data=d, follow_redirects=True)
+        self.assertIn('Please sign in', r.data)
+
+        url = '/api/?api_key={api_key}'.format(api_key=api_key)
+        r = self.app.post(url, data=d)
+        self.assertIn('"stat": "fail"', r.data)
+
+    def test_backgroun_api(self):
+        actions = [
+            'background_search', 'background_download',
+            'background_status', 'background_update'
+        ]
+        called = 0
+        for action in actions:
+            r = self.app.post('/api/?action={0}'.format(action))
+            res = json.loads(r.data)
+            self.assertEqual(res['stat'], 'ok')
+            self.assertEqual(res['result'], [])
+            called += 1
+        self.assertEqual(called, len(actions))
+
 
 class TestClients(unittest.TestCase):
     def setUp(self):
@@ -83,7 +125,7 @@ class TestClients(unittest.TestCase):
 
     def test_client_settings(self):
         c = clients.get_torrent_client('transmission')
-        self.assertEqual(c._name, 'transmission')
+        self.assertEqual(c.name, 'transmission')
         self.assertEqual(c._settings, c.get_settings())
 
     def test_client_save_settings(self):
