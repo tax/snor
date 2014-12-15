@@ -247,8 +247,7 @@ class Tasks(threading.Thread):
                         'port': self.port,
                         'api_key': settings.api_key
                     }
-                    url = url.format(**kwargs)
-                    r = requests.post(url)
+                    r = requests.post(url.format(**kwargs))
                     logger.info(r.content)
             counter += 1
             time.sleep(1)

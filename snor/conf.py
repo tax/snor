@@ -24,7 +24,9 @@ class Conf():
 
     def __getattr__(self, name):
         settings = self.get_settings()
-        return settings[name]
+        if name not in self._settings:
+            raise KeyError('Invalid setting: {0}'.format(name))
+        return settings.get(name, None)
 
     def get_settings(self):
         try:

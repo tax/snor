@@ -62,7 +62,6 @@ class Show(peewee.Model):
         for e in episodes:
             l = lambda x: e.get_code() in os.path.basename(x).upper() or \
                 e.get_code(short=True) in os.path.basename(x).upper()
-            
             found = filter(l, vids)
             if found:
                 e.location = found[0]
