@@ -10,13 +10,14 @@
         <h3>Search result</h3>
         <div class="input-append">
           <form id="id_frm_search" name="frm_search" method="POST" action=".">
+          {% if folder %}<input type="hidden" name="folder" value="{{folder}}">{% endif %}
           <input class="span3" type="text" name="q" value="{{query}}" placeholder="Search">
           <button class="btn" type="submit">Search</button>
           </form>
         </div>
 
         {% if result %}
-        <table class="table table-bordered">    
+        <table class="table table-bordered hidden-phone">    
           <thead>
             <tr>
               <th width="60%">Name</th>
@@ -28,17 +29,41 @@
             {% for show in result %}
             <tr>
               <td>
-                {{show.seriesname}} {% if show.imdb_id %}<a href="http://www.imdb.com/title/{{show.imdb_id}}/" target="_blank"><img src="/static/img/imdb-icon24.png"/ class="imdb-icon"></a>{% endif %}
+                {{show.seriesname}} {% if show.imdb_id %}<a href="http://www.imdb.com/title/{{show.imdb_id}}/" target="_blank" class="hidden-phone"><img src="/static/img/imdb-icon24.png"/ class="imdb-icon"></a>{% endif %}
               </td>
               <td>{{show.firstaired}} </td>
               <td>
-                <a class="btn btn-success" href="/show/add/{{choice}}/{{show.seriesid}}/?name={{show.seriesname|u}}&first_aired={{show.firstaired}}{% if request.args.folder %}&folder={{request.args.folder|u}}{% endif %}">
+                <a class="btn btn-success" href="/show/add/{{choice}}/{{show.seriesid}}/?name={{show.seriesname|u}}&first_aired={{show.firstaired}}{% if folder %}&folder={{folder}}{% endif %}">
                   <i class="icon-plus icon-white"></i> Add
                 </a>
               </td>
             </tr>
            {% endfor %}
         </table>
+
+        <table class="table table-bordered hidden-desktop">
+          <thead>
+            <tr>
+              <th width="65%">Name</th>
+              <th width="35%">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for show in result %}
+            <tr>
+              <td>
+                {{show.seriesname}} <br/><small>{{show.firstaired}}</small>
+              </td>
+              <td>
+                <a class="btn btn-success" href="/show/add/{{choice}}/{{show.seriesid}}/?name={{show.seriesname|u}}&first_aired={{show.firstaired}}{% if folder %}&folder={{folder}}{% endif %}">
+                  <i class="icon-plus icon-white"></i> Add
+                </a>
+              </td>
+            </tr>
+           {% endfor %}
+        </table>
+
+
         {% else %}
         <div class="alert">
           No results found for <strong>&quot;{{query}}&quot;</strong>

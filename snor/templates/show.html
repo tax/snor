@@ -20,17 +20,72 @@
           </div>
         {% endif %}
 
-    {% for season in episodes|groupby('seasonnumber') | reverse %}
-        <a name="season{{season.grouper}}"></a>
+        <div class="hidden-phone">
+        {% for season in episodes|groupby('seasonnumber') | reverse %}
+          <a name="season{{season.grouper}}"></a>
+          <h4>{% if season.grouper != 0 %}Season {{season.grouper}}{% else %}Specials{% endif %}</h4>
+          <table class="table table-bordered">    
+            <thead>
+              <tr>
+                <th width="50%">Name</th>
+                <th width="5%"></th>
+                <th width="15%">Airdate</th>
+                <th width="15%">Status</th>
+                <th width="15%"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for episode in season.list | reverse %}
+              <tr id="id_episode_{{episode.id}}" class="status_{{episode.get_status()|replace(" ","")}}">
+                <td>
+                  <strong>{{episode.episodenumber}}.</strong> {{episode.episodename|default("TBA", True)}}
+                  {% if episode.imdb_id %}<a href="http://www.imdb.com/title/{{episode.imdb_id}}/" target="_blank"><img src="/static/img/imdb-icon24.png"/ class="imdb-icon"></a>{% endif %}
+                </td>
+                <td>
+                  {% if episode.overview %}
+                  <a href="#" data-toggle="tooltip" data-placement="left" title="{{episode.overview}}"><i class="icon-info-sign"></i></a>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if episode.firstaired %}
+                  {{episode.firstaired.strftime('%Y-%m-%d')}}
+                  {% else %}
+                  Never
+                  {% endif %}
+                </td>
+                <td class="episode_status" {% if episode.get_status() == "downloaded" %}title="{{episode.location}}"{% endif %}>
+                  {{episode.get_status()}}
+                </td>
+                <td>
+                  <!-- -->
+                  <div class="btn-group">
+                    <button class="btn btn-small btn-inverse">Action</button>
+                    <button class="btn btn-small btn-inverse dropdown-toggle" data-toggle="dropdown">
+                      <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><a tabindex="-1" href="#" class="action_mark" data-action="skipped" data-episode-id="{{episode.id}}">Mark as skipped</a></li>
+                      <li><a tabindex="-1" href="#" class="action_mark" data-action="wanted" data-episode-id="{{episode.id}}">Mark as wanted</a></li>
+                      <li><a tabindex="-1" href="#"class="action_mark" data-action="downloaded" data-episode-id="{{episode.id}}">Mark as downloaded</a></li>
+                    </ul>
+                  </div>
+
+                </td>
+              </tr>
+             {% endfor %}
+          </table>
+        {% endfor %}
+      </div>
+
+
+      <div class="hidden-desktop">
+        {% for season in episodes|groupby('seasonnumber') | reverse %}
         <h4>{% if season.grouper != 0 %}Season {{season.grouper}}{% else %}Specials{% endif %}</h4>
-        <table class="table table-bordered">    
+        <table class="table table-bordered ">    
           <thead>
             <tr>
-              <th width="50%">Name</th>
-              <th width="5%"></th>
-              <th width="15%">Airdate</th>
-              <th width="15%">Status</th>
-              <th width="15%"></th>
+              <th width="80%">Name</th>
+              <th width="20%"></th>
             </tr>
           </thead>
           <tbody>
@@ -38,22 +93,13 @@
             <tr id="id_episode_{{episode.id}}" class="status_{{episode.get_status()|replace(" ","")}}">
               <td>
                 <strong>{{episode.episodenumber}}.</strong> {{episode.episodename|default("TBA", True)}}
-                {% if episode.imdb_id %}<a href="http://www.imdb.com/title/{{episode.imdb_id}}/" target="_blank"><img src="/static/img/imdb-icon24.png"/ class="imdb-icon"></a>{% endif %}
-              </td>
-              <td>
-                {% if episode.overview %}
-                <a href="#" data-toggle="tooltip" data-placement="left" title="{{episode.overview}}"><i class="icon-info-sign"></i></a>
-                {% endif %}
-              </td>
-              <td>
-                {% if episode.firstaired %}
-                {{episode.firstaired.strftime('%Y-%m-%d')}}
+                <br/><small>{% if episode.firstaired %}
+                ({{episode.firstaired.strftime('%Y-%m-%d')}} - {{episode.get_status()}})
                 {% else %}
-                Never
-                {% endif %}
-              </td>
-              <td class="episode_status" {% if episode.get_status() == "downloaded" %}title="{{episode.location}}"{% endif %}>
-                {{episode.get_status()}}
+                (Never)
+                {% endif %}</small>
+
+
               </td>
               <td>
                 <!-- -->
@@ -62,7 +108,7 @@
                   <button class="btn btn-small btn-inverse dropdown-toggle" data-toggle="dropdown">
                     <span class="caret"></span>
                   </button>
-                  <ul class="dropdown-menu">
+                  <ul class="dropdown-menu pull-right">
                     <li><a tabindex="-1" href="#" class="action_mark" data-action="skipped" data-episode-id="{{episode.id}}">Mark as skipped</a></li>
                     <li><a tabindex="-1" href="#" class="action_mark" data-action="wanted" data-episode-id="{{episode.id}}">Mark as wanted</a></li>
                     <li><a tabindex="-1" href="#"class="action_mark" data-action="downloaded" data-episode-id="{{episode.id}}">Mark as downloaded</a></li>
@@ -73,8 +119,10 @@
             </tr>
            {% endfor %}
         </table>
-    {% endfor %}
+        {% endfor %}
       </div>
+
+    </div>
     </div>
 
     <div class="span3 right">

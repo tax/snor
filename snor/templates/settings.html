@@ -19,7 +19,7 @@
 
         <form id="id_form_settings" name="form_settings" class="form-horizontal" method="POST" action=".">
 
-            <input type="hidden" name="filters" value="">
+            <input type="hidden" name="default_filters" value="">
 
             <div class="control-group">
                 <label class="control-label" for="login">Login:</label>
@@ -102,23 +102,12 @@
                 </div>
             </div>
             
-            <div class="control-group">
+            <div class="control-group hidden-phone">
                 <label class="control-label">Filters:</label>
                 <div class="controls">
-                <table id="id_table_filters" class="table table-bordered" style="width:500px;">    
-                  <tbody>
-                    <tr data-filter='{"key":"name","operator":"in","value":"{{request.args.name}}"}'>                
-                      <td><em>Name</em></td>
-                      <td><em>Contains</em></td>
-                      <td><em>{{request.args.name}}</em></td>
-                      <td>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-mini"><i class="icon-minus"></i></button>
-                            <button class="btn btn-mini disabled" disabled="disabled"><i class="icon-plus"></i></button>
-                        </div>
-                      </td>
-                    </tr>           
 
+               <table id="id_table_filters" class="table table-bordered" style="width:500px;">    
+                  <tbody>
                     <tr class="filter-form">                
                       <td>
                         <select id="id_key" name="key" class="input-medium">
@@ -148,6 +137,7 @@
                     </tr>           
                   </tbody>
                 </table>
+
                 </div>
             </div>
             <div class="control-group">
@@ -199,84 +189,115 @@
 {% endblock %}
 
 {% block script %}
+<script id="filter-template" type="text/x-handlebars-template">
+{% raw %}
+<tr data-filter='{"key":"{{key}}","operator":"{{operator}}","value":"{{value}}"}'>                
+  <td><em>{{keyFull}}</em></td>
+  <td><em>{{operatorFull}}</em></td>
+  <td><em>{{value}}</em></td>
+  <td>
+    <div class="btn-group">
+        <button type="button" class="btn btn-mini action_remove_filter"><i class="icon-minus"></i></button>
+        <button class="btn btn-mini disabled" disabled="disabled"><i class="icon-plus"></i></button>
+    </div>
+  </td>
+</tr>
+{% endraw %}
+</script>
+
 <script>
-$('#id_form_settings').on('submit', function () {
-    var p = $('input[name=password]').val();
-    var pc = $('input[name=passwordconfirm]').val();
-    if(p != pc){
-        $('#main_alert').removeClass('hide').addClass('alert-error');;
-        $('#main_alert strong').html('Passwords don&#39;t match');
-        $('input[name=password],input[name=passwordconfirm]').parents('.control-group').addClass('error');
-        return false;
-    }
-    else{
+$(document).ready(function(){
+    $('#id_form_settings').on('submit', function () {
+        var p = $('input[name=password]').val();
+        var pc = $('input[name=passwordconfirm]').val();
+        if(p != pc){
+            $('#main_alert').removeClass('hide').addClass('alert-error');;
+            $('#main_alert strong').html('Passwords don&#39;t match');
+            $('input[name=password],input[name=passwordconfirm]').parents('.control-group').addClass('error');
+            return false;
+        }
+
+        // Save filters
+        var filters =[];
+        $("#id_table_filters tr").each(function(){
+            if($(this).attr('data-filter')){
+                filters.push(JSON.parse($(this).attr('data-filter')));
+            }
+        });
+        $('input[name=default_filters]').val(JSON.stringify(filters));
+
         $('#main_alert strong').addClass('hide');
         $('input[name=password],input[name=passwordconfirm]').parents('.control-group').removeClass('error');
         return true;
-    }
-});
-
-$('input[name=login_required]').change(function () {
-    var v = $('input[name=login_required]:radio:checked').val();
-    if(v == "nologin"){
-        $('.login').attr('readonly','true')
-    }
-    else{
-        $('.login').removeAttr('readonly');
-    }
-});
-
-$('#id_browse').on('click',function(e){
-    e.preventDefault();
-    filePicker({ 
-            startPath : '', 
-            show : true
-        }, 
-        function(folder){ 
-            $('input[name=folder]').val(folder);
-        }
-    );  
-});
-
-$('#id_client_settings').on('click',function(e){
-    var client = $('#id_client').val();
-    var url = '/settings/client/' + client + '/';
-
-    $('#modalsettings h3').html('Settings for ' + client)
-    $.getJSON(url, function(data) {
-        var str = JSON.stringify(data.result, undefined, 2);
-        $('#id_client_settings_json').val(str);
     });
-    $('#modalsettings').modal();
-});
 
-function isJsonString(str) {
-    try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
+    $('input[name=login_required]').change(function () {
+        var v = $('input[name=login_required]:radio:checked').val();
+        if(v == "nologin"){
+            $('.login').attr('readonly','true')
+        }
+        else{
+            $('.login').removeAttr('readonly');
+        }
+    });
 
-$('#id_save_client_settings').on('click',function(e){
-    var client = $('#id_client').val();
-    var url = '/settings/client/' + client + '/';
-    var val = $('#id_client_settings_json').val();
+    $('#id_browse').on('click',function(e){
+        e.preventDefault();
+        filePicker({ 
+                startPath : '', 
+                show : true
+            }, 
+            function(folder){ 
+                $('input[name=folder]').val(folder);
+            }
+        );  
+    });
 
-    if(isJsonString(val)){
-        $('#modalsettings div.alert').addClass('hide');
-        $('#id_client_settings_json').parents('.control-group').removeClass('error');
-        $.post(url, {'value': val}, function( data ) {
-          $('#modalsettings').modal('hide');
+    $('#id_client_settings').on('click',function(e){
+        var client = $('#id_client').val();
+        var url = '/settings/client/' + client + '/';
+
+        $('#modalsettings h3').html('Settings for ' + client)
+        $.getJSON(url, function(data) {
+            var str = JSON.stringify(data.result, undefined, 2);
+            $('#id_client_settings_json').val(str);
         });
+        $('#modalsettings').modal();
+    });
+
+    function isJsonString(str) {
+        try {
+            JSON.parse(str);
+        } catch (e) {
+            return false;
+        }
+        return true;
     }
-    else{
-        $('#id_client_settings_json').parents('.control-group').addClass('error');
-    }
+
+    $('#id_save_client_settings').on('click',function(e){
+        var client = $('#id_client').val();
+        var url = '/settings/client/' + client + '/';
+        var val = $('#id_client_settings_json').val();
+
+        if(isJsonString(val)){
+            $('#modalsettings div.alert').addClass('hide');
+            $('#id_client_settings_json').parents('.control-group').removeClass('error');
+            $.post(url, {'value': val}, function( data ) {
+              $('#modalsettings').modal('hide');
+            });
+        }
+        else{
+            $('#id_client_settings_json').parents('.control-group').addClass('error');
+        }
+    });
+
+
+    var filters = {{settings.default_filters|safe}};
+
+    $.each(filters, function(index, filter){
+        addFilter(filter);
+    });
 });
-
-
 
 </script>
 {% endblock %}

@@ -157,8 +157,10 @@ def get_show_settings(show_id):
 @login_required
 def search_show(choice):
     if request.method == 'POST' or 'folder' in request.args:
+        folder = request.form.get('folder', None)
         if 'folder' in request.args:
-            q = os.path.basename(request.args.get('folder', ''))
+            folder = request.args.get('folder', '')
+            q = os.path.basename(folder)
         else:
             q = request.form['q']
         shows = utils.find_shows(q)
@@ -166,6 +168,7 @@ def search_show(choice):
             'search_result.html',
             result=shows,
             choice=choice,
+            folder=folder,
             query=q
         )
     return render_template('search.html', choice=choice)

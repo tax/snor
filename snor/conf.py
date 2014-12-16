@@ -12,7 +12,7 @@ class Conf():
         'login_required': False,
         'username': 'admin',
         'password': 'admin',
-        'filters': '',
+        'default_filters': [],
         'secret_key': os.urandom(24).encode('base64'),
         'api_key': os.urandom(24).encode('base64').replace('+', '-'),
         'folder': os.path.expanduser('~'),
